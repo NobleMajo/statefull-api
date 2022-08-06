@@ -1,4 +1,4 @@
-import { raw, RequestHandler, Router } from 'express';
+import { RequestHandler, Router } from 'express';
 import { getNodeExportSettings, Node, StatefullApiSettings } from '../types';
 
 declare global {
@@ -20,7 +20,7 @@ export function applyNodeRoutes(
         salt: string,
         millis: number,
     ) => {
-        return (
+        const res = (
             await settings.hashFunc({
                 value: millis + settings.nodeSecret + millis,
                 algorithm: settings.nodeHashAlgorithm,
@@ -28,23 +28,23 @@ export function applyNodeRoutes(
                 keylen: settings.nodeHashKeylen,
                 salt: salt,
             })
-        ).hash == hash
+        )
+        return res.hash === hash
     }
 
     const secretValidator: RequestHandler = async (req, res, next) => {
         let millis = Number(req.header(settings.nodeTimeHeader))
         if (isNaN(millis)) {
-            res.status(400)
-                .send(
-                    "'" + settings.nodeTimeHeader +
-                    "' header value is not a valid number"
-                )
+            res.status(400).send(
+                "'" + settings.nodeTimeHeader +
+                "' header value is not a valid number"
+            )
             return
         }
         let hash = req.header(settings.nodeHashHeader)
         if (
-            typeof hash != "string" ||
-            hash.length == 0
+            typeof hash !== "string" ||
+            hash.length === 0
         ) {
             res.status(400)
                 .send(
@@ -55,8 +55,8 @@ export function applyNodeRoutes(
         }
         let salt = req.header(settings.nodeSaltHeader)
         if (
-            typeof salt != "string" ||
-            salt.length == 0
+            typeof salt !== "string" ||
+            salt.length === 0
         ) {
             res.status(400)
                 .send(
@@ -75,8 +75,8 @@ export function applyNodeRoutes(
     const nodeResolver: RequestHandler = async (req, res, next) => {
         const rawNodeId = req.header(settings.nodeIdHeader)
         if (
-            typeof rawNodeId == "string" &&
-            rawNodeId.length != 0
+            typeof rawNodeId === "string" &&
+            rawNodeId.length !== 0
         ) {
             const nodeId = Number(rawNodeId)
             if (isNaN(nodeId)) {
@@ -101,14 +101,15 @@ export function applyNodeRoutes(
         } else {
             const nodeUrl = req.header(settings.nodeUrlHeader)
             if (
-                typeof nodeUrl == "string" &&
-                nodeUrl.length != 0
+                typeof nodeUrl === "string" &&
+                nodeUrl.length !== 0
             ) {
                 req.node = await settings.db.getNodeByUrl(nodeUrl)
                 if (!req.node) {
                     res.status(400)
                         .send(
-                            "Node with url '" + nodeUrl +
+                            "Node with url '" +
+                            nodeUrl +
                             "' not found"
                         )
                     return
@@ -133,7 +134,7 @@ export function applyNodeRoutes(
             }
         }
 
-        if (typeof req.node != "object") {
+        if (typeof req.node !== "object") {
             res.status(403)
                 .send("Unregistered node id or url")
             return
@@ -143,7 +144,7 @@ export function applyNodeRoutes(
 
     router.post("/node/heartbeat", secretValidator, nodeResolver, async (req, res) => {
         let node = await settings.db.tickNode(req.node.id)
-        if (node == undefined) {
+        if (node === undefined) {
             res.sendStatus(406)
             return
         }
@@ -160,15 +161,17 @@ export function applyNodeRoutes(
         }, settings.nodeHeartbeatTimeout)
     })
 
-    router.get("/node/statefull.json", secretValidator,
+    router.get(
+        "/node/statefull.json",
+        secretValidator,
         (req, res) => res.status(200).json(nodeExportSettings)
     )
 
     router.post("/node/register", secretValidator, async (req, res) => {
         const url = req.header(settings.nodeUrlHeader)
         if (
-            typeof url != "string" ||
-            url.length == 0
+            typeof url !== "string" ||
+            url.length === 0
         ) {
             res.status(400).send(
                 "'" + settings.nodeUrlHeader +
@@ -193,7 +196,7 @@ export function applyNodeRoutes(
 
     router.post("/node/unregister", secretValidator, nodeResolver, async (req, res) => {
         const node = await settings.db.unregisterNode(req.node.id)
-        if (node == undefined) {
+        if (node === undefined) {
             res.sendStatus(406)
             return
         }

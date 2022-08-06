@@ -20,12 +20,12 @@ export interface SecretHashOptions {
 export async function createSecretHash(
     options: SecretHashOptions,
 ): Promise<SecretHash> {
-    const salt = options.salt ?? crypto.randomBytes(128).toString('base64');
+    const salt = options.salt ?? crypto.randomBytes(32).toString('base64');
     const hash = await new Promise<string>((res, rej) => crypto.pbkdf2(
         options.value,
         salt,
-        options.iterations ?? 1000,
-        options.keylen ?? 128,
+        options.iterations ?? 512,
+        options.keylen ?? 32,
         options.algorithm ?? 'sha512',
         (err, hash) =>
             err ?

@@ -15,13 +15,12 @@ export function createApiMiddleware(
     }
 
     const router = Router()
-
     const exportSettings = getExportSettings(settings)
     router.get(
         "/statefull.json",
         (req, res) => res.status(200).json(exportSettings)
     )
-  
+
     applyNodeRoutes(
         router,
         settings,

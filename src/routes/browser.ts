@@ -1,5 +1,5 @@
 import { Router, RequestHandler } from 'express';
-import { Session, StatefullApiSettings } from '../types';
+import { Node, Session, StatefullApiSettings } from '../types';
 import * as JWT from "jsonwebtoken"
 
 declare global {
@@ -18,9 +18,9 @@ export function applyBrowserRoutes(
     const sessionParser: RequestHandler = async (req, res, next) => {
         try {
             let token = req.header(settings.jwtRequestHeader)
-            if (typeof token != "string") {
+            if (typeof token !== "string") {
                 throw new Error()
-            } else if (token.length == 0) {
+            } else if (token.length === 0) {
                 res.status(400)
                     .send(
                         "'" + settings.jwtRequestHeader +
@@ -45,9 +45,9 @@ export function applyBrowserRoutes(
                 }
             ) as any
             if (
-                typeof req.session != "object" ||
-                typeof req.session.id != "string" ||
-                typeof req.session.new != "boolean"
+                typeof req.session !== "object" ||
+                typeof req.session.id !== "string" ||
+                typeof req.session.new !== "boolean"
             ) {
                 throw new Error()
             }
@@ -64,8 +64,8 @@ export function applyBrowserRoutes(
         const oldEnd = res.end
         const oldFlushHeaders = res.flushHeaders
         const setHeader = () => {
-            if (typeof req.session == "object") {
-                if (typeof req.session.id != "string") {
+            if (typeof req.session === "object") {
+                if (typeof req.session.id !== "string") {
                     req.session.id = srcId
                 }
                 req.session.new = srcNew
@@ -94,11 +94,7 @@ export function applyBrowserRoutes(
             setHeader()
             return res.end(...params)
         }) as any
-
-        if (
-            req.session.new === true &&
-            settings.initSession
-        ) {
+        if (req.session.new === true) {
             await settings.initSession(req, res, next, settings)
         } else {
             next()
@@ -106,7 +102,7 @@ export function applyBrowserRoutes(
     }
 
     router.get("/browser/allocate", sessionParser, sessionValidator, async (req, res) => {
-        let target: any
+        let target: Node | undefined
         try {
             target = await settings.allocateNode(
                 req,
@@ -118,12 +114,12 @@ export function applyBrowserRoutes(
             res.sendStatus(400)
             return
         }
-        if (target == undefined) {
+        if (target === undefined) {
             res.sendStatus(503)
         } else if (
-            typeof target == "object" &&
-            typeof target.url == "string" &&
-            typeof target.id == "number"
+            typeof target === "object" &&
+            typeof target.url === "string" &&
+            typeof target.id === "number"
         ) {
             res.status(200)
                 .send("" + target.url)
